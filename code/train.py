@@ -67,28 +67,6 @@ collator = DataCollatorForCompletionOnlyLM(response_template=response_template, 
 
 path = "/content/drive/MyDrive/falcon11b-sql_instruct"
 
-training_args = TrainingArguments(
-        per_device_train_batch_size=4,
-        gradient_accumulation_steps=4,
-        warmup_steps=100,
-        max_steps=200,
-        learning_rate=2e-4,
-        fp16=True,
-        logging_steps=1,
-        output_dir='falcon-mamba_instruct'
-        )
-
-trainer = Trainer(
-    model=model,
-    train_dataset=tokenized_datasets['train'],
-    args=training_args,
-    data_collator=transformers.DataCollatorForLanguageModeling(tokenizer, mlm=False) # Ensures batched data is padded correctly using information from the tokenizer
-    )
-
-model.config.use_cache = False
-trainer.train()
-trainer.save_model()
-
 # Supervised Fine-Tuning
 sft_config = SFTConfig(
     output_dir=path, # Directory to save the fine-tuned model (mount drive)
