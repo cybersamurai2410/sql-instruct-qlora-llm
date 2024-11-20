@@ -1,2 +1,2 @@
-# sql-instruct-qlora-llm
-Fine-tuning large language model using QLoRA for instructions specializing in SQL query generation.
+# Fine-tuning LLMs using PEFT QLoRA for SQL 
+Applied instruction tuning with 4bit quantization by using QLoRA on an open-source 11B parameter LLM for generating SQL queries accurately. 
