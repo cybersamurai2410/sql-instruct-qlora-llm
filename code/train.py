@@ -105,10 +105,3 @@ sfttrainer = SFTTrainer(
     data_collator=collator,
     processing_class=tokenizer,
     )
-
-# Push adapters and tokenizer to hugging face hub
-from huggingface_hub import notebook_login
-notebook_login()
-repo_id = "adityas2410/falcon11b-sql_instruct"
-model.push_to_hub(repo_id)
-tokenizer.push_to_hub(repo_id)
