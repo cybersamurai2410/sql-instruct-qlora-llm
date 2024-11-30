@@ -1,28 +1,47 @@
+import time 
 import torch
-import bitsandbytes as bnb
-from datasets import load_dataset
-from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, Trainer, TrainingArguments, TrainerCallback
-from peft import AutoPeftModelForCausalLM, PeftModel, PeftConfig, LoraConfig, get_peft_model, prepare_model_for_kbit_training
-from trl import SFTTrainer, SFTConfig, DataCollatorForCompletionOnlyLM
+from transformers import AutoTokenizer, BitsAndBytesConfig
+from peft import AutoPeftModelForCausalLM
 
-model_id = "adityas2410/falcon11b-sql_instruct"
+adapters = 'path to peft adapters'
+quantization_config = BitsAndBytesConfig(
+    load_in_4bit=True, # Reduce model weights to 4-bit precision
+    bnb_4bit_use_double_quant=True, # Apply additional quantization layer
+    bnb_4bit_quant_type="nf4", # Normal float 4-bit format to optimize weights storage
+    bnb_4bit_compute_dtype=torch.bfloat16 # 4-bit weights temporarily upscaled to brain float 16-bit for matrix computations
+)
+
+# Load local peft adapters with remote base model  
 instruction_tuned_model = AutoPeftModelForCausalLM.from_pretrained(
-    model_id,
+    adapters,
+    quantization_config=quantization_config,
     low_cpu_mem_usage=True,
-    torch_dtype=torch.float16,
-    load_in_4bit=True,
     trust_remote_code=True,
-    local_files_only=True,
 )
 
 tokenizer = AutoTokenizer.from_pretrained(model_id)
 
-prompt = "Give three benifits of fine-tuning language models"
+start_memory = torch.cuda.memory_allocated()
+start_time = time.time()
+
+instruction_tuned_model.eval()  # Set model in inference mode
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 batch = tokenizer(prompt, return_tensors='pt').to(device)
 
-# Auotmatically handle mixed precision during text generation
-with torch.cuda.amp.autocast():
-  output_tokens = peft_model.generate(**batch, max_new_tokens=100)
+# Use mixed precision and disable gradients
+with torch.no_grad(), torch.amp.autocast('cuda'):
+    output_tokens = instruction_tuned_model.generate(**batch, max_new_tokens=100)
 
-print('\n\n', tokenizer.decode(output_tokens[0], skip_special_tokens=True))
+result = tokenizer.decode(output_tokens[0], skip_special_tokens=True)
+print(result, '\n')
+
+end_time = time.time()
+print(f"Inference time: {end_time - start_time} seconds")
+
+end_memory = torch.cuda.memory_allocated()
+peak_memory = torch.cuda.max_memory_allocated()
+print(f"Memory allocated before inference: {start_memory} bytes")
+print(f"Memory allocated after inference: {end_memory} bytes")
+print(f"Memory used during inference: {end_memory - start_memory} bytes")
+print(f"Peak allocated memory: {peak_memory}")
