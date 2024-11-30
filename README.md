@@ -22,3 +22,5 @@ This project demonstrates fine-tuning a 11B parameter LLM for generating accurat
 - BitsAndBytes: Provides 4-bit and 8-bit quantization techniques, significantly reducing model size and computational requirements for fine-tuning and inference. 
 - Weights & Biases (wandb): Tool for tracking, visualizing, and logging metrics during training and evaluation. It enables better monitoring of model performance and hyperparameter optimization.
 
+## Inference
+<img width="768" alt="image" src="https://github.com/user-attachments/assets/8208d827-8496-496d-8623-212d7daf8f8e">
