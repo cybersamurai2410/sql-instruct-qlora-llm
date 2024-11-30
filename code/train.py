@@ -53,25 +53,32 @@ lora_config = LoraConfig(
 model = get_peft_model(model, lora_config)
 print_trainable_parameters(model)
 
-data = load_dataset("HuggingFaceH4/testing_self_instruct_small", split="train")
+data = load_dataset("kaxap/pg-wikiSQL-sql-instructions-80k", split="train")
+data = data.filter(lambda x: x['sql_query'] and x['create_table_statement']) # Filter out rows with missing values
+truncated_data = data.select(range(10000)) # Truncate dataset to 10k rows
 
-def formatting_prompts_func(example):
-    output_texts = []
-    for i in range(len(example['prompt'])):
-        text = f"### Question: {example['prompt'][i]}\n ### Answer: {example['completion'][i]}"
-        output_texts.append(text)
-    return output_texts
+def instruction_prompt_format(example):
+  return [f"""Use the Instruction and Input to write Output as SQL query.
 
-response_template = " ### Answer:"
-collator = DataCollatorForCompletionOnlyLM(response_template=response_template, tokenizer=tokenizer)
+    ### Instruction:
+    {example['question']}
 
-path = "/content/drive/MyDrive/falcon11b-sql_instruct"
+    ### Input:
+    {example['create_table_statement']}
+
+    ### Output:
+    {example['sql_query']}
+    """]
+
+collator = DataCollatorForCompletionOnlyLM(response_template=" ### Output:", tokenizer=tokenizer)
+
+path = "path to save model files"
 
 # Supervised Fine-Tuning
 sft_config = SFTConfig(
     output_dir=path, # Directory to save the fine-tuned model (mount drive)
     overwrite_output_dir=True, # Overwrites the output directory if it exists
-    num_train_epochs=3, # number of examples / batch size per step = total steps per epoch
+    num_train_epochs=5, # number of examples / batch size per step = total steps per epoch
     learning_rate=2e-5,
     lr_scheduler_type="cosine",
     weight_decay=0.001, # Regularization
@@ -85,26 +92,22 @@ sft_config = SFTConfig(
     logging_dir=f"{path}/logs",
     logging_steps=25, # Log training metrics every n steps
     max_seq_length=2048, # Set to max context length of llm
-    packing=True, # Combines sequences to fit context length (not compatilble with DataCollatorForCompletionOnlyLM)
+    # packing=True, # Combines sequences to fit context length (not compatilble with DataCollatorForCompletionOnlyLM)
     report_to="wandb", # Logging to Weights & Biases
 )
 
 sfttrainer = SFTTrainer(
     model,
-    train_dataset=data,
+    train_dataset=truncated_data,
     args=sft_config,
     peft_config=lora_config,
-    formatting_func=formatting_prompts_func, # The `formatting_func` should return a list of processed strings since it can lead to silent bugs.
+    formatting_func=instruction_prompt_format,
     data_collator=collator,
-    tokenizer=tokenizer,
+    processing_class=tokenizer,
     )
 
-sfttrainer.train()
-sfttrainer.save_model()
-wandb.finish()
-
+# Push adapters and tokenizer to hugging face hub
 from huggingface_hub import notebook_login
-
 notebook_login()
 repo_id = "adityas2410/falcon11b-sql_instruct"
 model.push_to_hub(repo_id)
