@@ -4,6 +4,12 @@ from datasets import load_dataset
 from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig, Trainer, TrainingArguments, TrainerCallback
 from peft import AutoPeftModelForCausalLM, PeftModel, PeftConfig, LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from trl import SFTTrainer, SFTConfig, DataCollatorForCompletionOnlyLM
+import wandb 
+
+wandb.login() 
+%env WANDB_PROJECT=sql_llm-instruct
+%env WANDB_LOG_MODEL=end
+%env WANDB_WATCH=false
 
 # https://huggingface.co/tiiuae/tiiuae/falcon-11B
 model_id = "tiiuae/falcon-11B"
