@@ -2,6 +2,7 @@
 
 ## Overview 
 This project demonstrates fine-tuning a 11B parameter LLM for generating accurate SQL queries using Parameter-Efficient Fine-Tuning (PEFT) and Quantized Low-Rank Adaptation (QLoRA). By employing 4-bit quantization, it achieves efficient fine-tuning on large language models while maintaining high accuracy with lower computational costs.
+[View model card of fine-tuned peft adapters via Hugging Face Hub](https://huggingface.co/adityas2410/falcon11b-sql_instruct/tree/main)
 
 ## Key Features
 - **Base Model:** Falcon2-11B [tiiuae/falcon-11B](https://huggingface.co/tiiuae/falcon-11B)
@@ -24,3 +25,5 @@ This project demonstrates fine-tuning a 11B parameter LLM for generating accurat
 
 ## Inference
 <img width="768" alt="image" src="https://github.com/user-attachments/assets/8208d827-8496-496d-8623-212d7daf8f8e">
+<img width="928" alt="image" src="https://github.com/user-attachments/assets/2fdd5425-61ef-4857-92b0-7590d99a9258">
+
